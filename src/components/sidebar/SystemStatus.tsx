@@ -16,7 +16,7 @@ export default function SystemStatus({ isConnected, brokerUrl = "192.168.221.4" 
         DIAGNOSTICS
       </Typography>
       
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         <StatusItem 
           icon={<Wifi size={14} />} 
           label="Service" 
@@ -48,7 +48,7 @@ export default function SystemStatus({ isConnected, brokerUrl = "192.168.221.4" 
 
 function StatusItem({ icon, label, value, color }: { icon: any, label: string, value: string, color: string }) {
     return (
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Box sx={{ color: "rgba(255,255,255,0.2)", display: "flex" }}>{icon}</Box>
                 <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)", fontWeight: 600, fontSize: '0.65rem' }}>{label.toUpperCase()}</Typography>

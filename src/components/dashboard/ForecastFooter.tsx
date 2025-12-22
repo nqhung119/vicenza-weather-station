@@ -24,7 +24,7 @@ export default function ForecastFooter({ data }: ForecastFooterProps) {
   return (
     <Box sx={{ mt: "auto", position: "relative", width: "100%", pt: 1.5, pb: 1.5 }}>
       {/* Labels row */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.8, px: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.8, px: 3 }}>
         {labels.map((label, i) => (
           <Typography 
             key={i} 
@@ -42,7 +42,7 @@ export default function ForecastFooter({ data }: ForecastFooterProps) {
       </Box>
 
       {/* Glowing Chart Area */}
-      <Box sx={{ height: 70, position: "relative", mx: -2 }}>
+      <Box sx={{ height: 70, position: "relative" }}>
         {mounted && (
           <LineChart
             {...({
@@ -58,7 +58,7 @@ export default function ForecastFooter({ data }: ForecastFooterProps) {
               slotProps: {
                 legend: { hidden: true },
               },
-              margin: { top: 12, right: 20, left: 20, bottom: 12 },
+              margin: { top: 12, right: 24, left: 24, bottom: 12 },
               height: 70,
               sx: {
                 ".MuiLineElement-root": {
@@ -73,7 +73,7 @@ export default function ForecastFooter({ data }: ForecastFooterProps) {
         {/* Glow point highlight on current value */}
         <Box sx={{ 
             position: "absolute", 
-            right: "18px", 
+            right: "22px", 
             bottom: "25px", 
             width: 8, 
             height: 8, 
@@ -85,7 +85,7 @@ export default function ForecastFooter({ data }: ForecastFooterProps) {
       </Box>
 
       {/* Temps row */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, px: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, px: 3 }}>
         {chartData.map((temp, i) => (
           <Typography 
             key={i} 

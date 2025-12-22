@@ -37,24 +37,24 @@ export default function MainDashboard({ data, history, children }: MainDashboard
         <Box sx={{ 
           width: "280px", 
           borderRight: "1px solid rgba(255,255,255,0.1)",
-          p: 3,
-          pt: 4,
+          px: 3,
+          py: 4,
           display: { xs: "none", lg: "flex" },
           flexDirection: "column",
           gap: 3
         }}>
-          <Box sx={{ textAlign: "center", mb: 1 }}>
+          <Box sx={{ textAlign: "center", mb: 2, mt: 2 }}>
             <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 2, display: "inline-block" }}>
               VICENZA
               <Box sx={{ height: 3, width: "100%", bgcolor: "rgba(255,255,255,0.3)", mt: 0.5, borderRadius: 1 }} />
             </Typography>
           </Box>
 
-          <Box sx={{ pl: 1 }}>
+          <Box>
             <SystemStatus isConnected={data?.isConnected ?? false} />
           </Box>
 
-          <Box sx={{ mt: "auto", pl: 1 }}>
+          <Box sx={{ mt: "auto" }}>
             <GlobeWidget />
           </Box>
         </Box>
@@ -62,7 +62,7 @@ export default function MainDashboard({ data, history, children }: MainDashboard
         {/* Main Content Area */}
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", px: { xs: 3, lg: 6 }, py: 4, position: "relative" }}>
           {/* Top Bar: System Status Only */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 4, mt: 2 }}>
             <Box sx={{ 
                 px: 2, py: 0.8, 
                 borderRadius: "20px", 
