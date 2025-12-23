@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CurrentWeather from '@/components/CurrentWeather'
 import WindStatus from '@/components/WindStatus'
 import SunriseSunset from '@/components/SunriseSunset'
 import Forecast from '@/components/Forecast'
 import Header from '@/components/Header'
 import Navigation from '@/components/Navigation'
+import SensorData from '@/components/SensorData'
+import type { SensorData as SensorPayload } from '@/lib/mqttService'
 
 interface WeatherData {
   current: {
@@ -16,6 +18,7 @@ interface WeatherData {
     windSpeed: number
     location: string
     uvIndex: number
+    humidity?: number
   }
   wind: {
     speed: number
@@ -34,63 +37,73 @@ interface WeatherData {
   }>
 }
 
+const baseWeather: WeatherData = {
+  current: {
+    temp: 22,
+    condition: 'Thunderstorms',
+    description:
+      'Heavy rain, strong winds, and occasional lightning expected. Sudden downpours may lead to localized flooding in some areas.',
+    windSpeed: 7.9,
+    location: 'Vicenza Station',
+    uvIndex: 5,
+  },
+  wind: {
+    speed: 7.9,
+    gusts: [8, 9, 7, 10, 8, 9, 11],
+    history: [6, 7, 8, 7, 9, 8, 7, 8, 9, 7, 8],
+  },
+  sun: {
+    sunrise: '06:30',
+    sunset: '19:45',
+    currentTime: '11:52',
+  },
+  forecast: [
+    { day: 'Monday', temp: 26, icon: 'cloud' },
+    { day: 'Tuesday', temp: 28, icon: 'cloud' },
+    { day: 'Wednesday', temp: 24, icon: 'storm' },
+    { day: 'Thursday', temp: 26, icon: 'cloud' },
+    { day: 'Friday', temp: 23, icon: 'cloud' },
+    { day: 'Saturday', temp: 26, icon: 'cloud' },
+    { day: 'Sunday', temp: 27, icon: 'sun-cloud' },
+  ],
+}
+
 export default function Home() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [sensorData, setSensorData] = useState<SensorPayload | null>(null)
 
   useEffect(() => {
-    fetchWeatherData()
+    const eventSource = new EventSource('/api/sensor-data')
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data: SensorPayload = JSON.parse(event.data)
+        setSensorData(data)
+      } catch (error) {
+        console.error('SSE parse error:', error)
+      }
+    }
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error)
+    }
+
+    return () => {
+      eventSource.close()
+    }
   }, [])
 
-  const fetchWeatherData = async () => {
-    try {
-      const response = await fetch('/api/weather')
-      const data = await response.json()
-      setWeatherData(data)
-    } catch (error) {
-      console.error('Error fetching weather data:', error)
-      // Fallback data for demo
-      setWeatherData({
-        current: {
-          temp: 22,
-          condition: 'Thunderstorms',
-          description: 'Heavy rain, strong winds, and occasional lightning expected. Sudden downpours may lead to localized flooding in some areas.',
-          windSpeed: 7.90,
-          location: 'New York',
-          uvIndex: 5
-        },
-        wind: {
-          speed: 7.90,
-          gusts: [8, 9, 7, 10, 8, 9, 11],
-          history: [6, 7, 8, 7, 9, 8, 7, 8, 9, 7, 8]
-        },
-        sun: {
-          sunrise: '06:30',
-          sunset: '19:45',
-          currentTime: '11:52'
-        },
-        forecast: [
-          { day: 'Monday', temp: 26, icon: 'cloud' },
-          { day: 'Tuesday', temp: 28, icon: 'cloud' },
-          { day: 'Wednesday', temp: 24, icon: 'storm' },
-          { day: 'Thursday', temp: 26, icon: 'cloud' },
-          { day: 'Friday', temp: 23, icon: 'cloud' },
-          { day: 'Saturday', temp: 26, icon: 'cloud' },
-          { day: 'Sunday', temp: 27, icon: 'sun-cloud' }
-        ]
-      })
-    } finally {
-      setLoading(false)
+  const weatherData = useMemo<WeatherData>(() => {
+    if (!sensorData) return baseWeather
+    return {
+      ...baseWeather,
+      current: {
+        ...baseWeather.current,
+        temp: sensorData.temp_out,
+        humidity: sensorData.hum_room,
+        location: 'Vicenza Station',
+      },
     }
-  }
-
-  if (loading || !weatherData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    )
-  }
+  }, [sensorData])
 
   return (
     <main className="min-h-screen relative overflow-hidden">
@@ -144,6 +157,11 @@ export default function Home() {
           {/* Forecast */}
           <div className="mt-12">
             <Forecast data={weatherData.forecast} />
+          </div>
+
+          {/* Sensor Data */}
+          <div className="mt-8">
+            <SensorData data={sensorData} />
           </div>
         </div>
       </div>

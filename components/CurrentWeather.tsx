@@ -7,6 +7,7 @@ interface CurrentWeatherProps {
     description: string
     location: string
     uvIndex: number
+    humidity?: number
   }
 }
 
@@ -38,6 +39,9 @@ export default function CurrentWeather({ data }: CurrentWeatherProps) {
           <div className="text-white/60 text-sm">
             UV Index: {data.uvIndex}
           </div>
+          {data.humidity !== undefined && (
+            <div className="text-white/60 text-sm">Humidity: {data.humidity}%</div>
+          )}
         </div>
       </div>
     </div>

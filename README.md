@@ -18,6 +18,7 @@ A modern, beautiful weather forecast application built with Next.js, featuring a
 
 - Node.js 18+ installed
 - npm or yarn package manager
+- MQTT broker reachable (default `192.168.221.4:1883`)
 
 ### Installation
 
@@ -33,15 +34,34 @@ npm run dev
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Environment Variables
+## Environment Variables (MQTT)
 
-To use real weather data, create a `.env.local` file and add your weather API key:
+Create `./.env.local` (or copy from `env.local.example`):
 
 ```
-WEATHER_API_KEY=your_api_key_here
+MQTT_HOST=192.168.221.4
+MQTT_PORT=1883
+MQTT_TOPIC=vicenza/weather/data
+# MQTT_USERNAME=
+# MQTT_PASSWORD=
 ```
 
-You can get a free API key from [OpenWeatherMap](https://openweathermap.org/api).
+## MQTT Integration
+
+- Topic subscribed: `vicenza/weather/data`
+- Message format:
+```json
+{
+  "temp_room": 26.0,
+  "hum_room": 77.0,
+  "temp_out": 28.2,
+  "lux": 129.6,
+  "ldr_raw": 1574,
+  "timestamp": 1766479802
+}
+```
+- Backend: MQTT client (singleton) connects and stores latest payload.
+- API: `/api/sensor-data` exposes Server-Sent Events (SSE) streaming real-time updates to the frontend.
 
 ## Project Structure
 
@@ -51,6 +71,8 @@ vicenza-weather-station/
 │   ├── api/
 │   │   └── weather/
 │   │       └── route.ts      # Weather API endpoint
+│   │   └── sensor-data/
+│   │       └── route.ts      # SSE stream for MQTT data
 │   ├── globals.css           # Global styles
 │   ├── layout.tsx            # Root layout
 │   └── page.tsx              # Main page
@@ -60,7 +82,10 @@ vicenza-weather-station/
 │   ├── Header.tsx            # Top header with user info
 │   ├── Navigation.tsx        # Navigation icons
 │   ├── SunriseSunset.tsx     # Sunrise/Sunset widget
-│   └── WindStatus.tsx        # Wind status widget
+│   ├── WindStatus.tsx        # Wind status widget
+│   └── SensorData.tsx        # Sensor data widget (MQTT)
+├── lib/
+│   └── mqttService.ts        # MQTT client singleton
 └── package.json
 ```
 
@@ -70,6 +95,7 @@ vicenza-weather-station/
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 - **React** - UI library
+ - **MQTT + SSE** - Real-time sensor data stream
 
 ## Customization
 
