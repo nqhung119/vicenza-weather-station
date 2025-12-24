@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/prod.db
+      - MQTT_HOST=host.docker.internal
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=vicenza/weather/data
+      - WEATHER_API_KEY=${WEATHER_API_KEY:-}
+    volumes:
+      - sqlite-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:
