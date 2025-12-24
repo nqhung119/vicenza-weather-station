@@ -1,5 +1,9 @@
 'use client'
 
+import Link from 'next/link'
+
+import { getLunarDate } from '@/lib/lunarDate'
+
 export default function Header() {
   const currentDate = new Date()
   const dateStr = currentDate.toLocaleDateString('vi-VN', { 
@@ -11,10 +15,12 @@ export default function Header() {
     minute: '2-digit',
     hour12: false
   })
+  const lunarDateStr = getLunarDate(currentDate)
 
   const navIcons = [
     {
       name: 'search',
+      href: '/',
       render: (
         <svg viewBox="0 0 24 24" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8" fill="none">
           <circle cx="11" cy="11" r="6" />
@@ -24,6 +30,7 @@ export default function Header() {
     },
     {
       name: 'map',
+      href: '/ban-do',
       render: (
         <svg viewBox="0 0 24 24" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8" fill="none">
           <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6" />
@@ -34,6 +41,7 @@ export default function Header() {
     },
     {
       name: 'notification',
+      href: '#', 
       render: (
         <svg viewBox="0 0 24 24" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8" fill="none">
            <path d="M6 10a6 6 0 1112 0c0 3 1 4 2 5H4c1-1 2-2 2-5z" strokeLinejoin="round" />
@@ -43,6 +51,7 @@ export default function Header() {
     },
     {
       name: 'settings',
+      href: '#',
       render: (
         <svg viewBox="0 0 24 24" className="w-5 h-5" stroke="currentColor" strokeWidth="1.8" fill="none">
           <circle cx="12" cy="12" r="3" />
@@ -59,20 +68,24 @@ export default function Header() {
         <div className="glass px-4 py-2 rounded-xl border border-white/10 flex items-center gap-3">
              <div className="text-white font-bold text-lg">{timeStr}</div>
              <div className="w-px h-4 bg-white/20"></div>
-             <div className="text-white/80 text-sm font-medium uppercase">{dateStr}</div>
+             <div className="flex flex-col">
+               <div className="text-white/80 text-sm font-medium uppercase leading-none">{dateStr}</div>
+               <div className="text-white/60 text-[10px] font-medium mt-0.5">{lunarDateStr}</div>
+             </div>
         </div>
       </div>
 
       {/* CENTER: Navigation (Slide Menu) */}
       <div className="glass-strong rounded-full px-4 py-2 flex items-center gap-2 border border-white/10 shadow-lg shadow-black/10">
         {navIcons.map((item) => (
-          <button
+          <Link
             key={item.name}
+            href={item.href}
             className="w-10 h-10 rounded-full bg-transparent hover:bg-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all duration-200"
             aria-label={item.name}
           >
             {item.render}
-          </button>
+          </Link>
         ))}
       </div>
       

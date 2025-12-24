@@ -1,6 +1,7 @@
 import { ensureMqttConnected, mqttService } from '@/lib/mqttService'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   ensureMqttConnected()
