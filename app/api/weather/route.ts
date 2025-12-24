@@ -105,9 +105,9 @@ function getVietnameseDayName(dayIndex: number): string {
 export async function GET() {
   try {
     const API_KEY = process.env.WEATHER_API_KEY
-    const CITY = 'Vicenza,IT' // Vicenza, Italy
-    const LAT = 45.5455 // Latitude của Vicenza
-    const LON = 11.5353 // Longitude của Vicenza
+    const CITY = 'Thanh Hoa,VN' // Thanh Hoa, Vietnam
+    const LAT = 19.8067 // Latitude của Thanh Hoa
+    const LON = 105.7852 // Longitude của Thanh Hoa
 
     // Nếu có API key, lấy dữ liệu thực tế
     if (API_KEY) {
@@ -190,15 +190,24 @@ export async function GET() {
       const weatherData = {
         current: {
           temp: Math.round(currentData.main.temp),
+          feels_like: Math.round(currentData.main.feels_like),
+          temp_min: Math.round(currentData.main.temp_min),
+          temp_max: Math.round(currentData.main.temp_max),
+          pressure: currentData.main.pressure,
           condition: translated.condition,
+          weatherMain: weatherMain,
           description: translated.description,
           windSpeed: Math.round(windSpeed * 100) / 100,
+          windDirection: currentData.wind.deg,
+          clouds: currentData.clouds.all,
+          visibility: currentData.visibility,
           location: 'Trạm VICENZA',
           uvIndex: Math.round((currentData.uvi || 5) * 10) / 10,
           humidity: currentData.main.humidity
         },
         wind: {
           speed: Math.round(windSpeed * 100) / 100,
+          direction: currentData.wind.deg,
           gusts: gusts.map(g => Math.round(g * 100) / 100),
           history: history.map(h => Math.round(h * 100) / 100)
         },
@@ -221,15 +230,24 @@ export async function GET() {
     const fallbackData = {
       current: {
         temp: 22,
+        feels_like: 24,
+        temp_min: 20,
+        temp_max: 25,
+        pressure: 1012,
         condition: 'Dông bão',
+        weatherMain: 'Thunderstorm',
         description: 'Mưa lớn, gió mạnh và sét thỉnh thoảng. Mưa đột ngột có thể dẫn đến ngập lụt cục bộ ở một số khu vực.',
         windSpeed: 7.90,
+        windDirection: 140,
+        clouds: 85,
+        visibility: 8000,
         location: 'Trạm VICENZA',
         uvIndex: 5,
         humidity: 75
       },
       wind: {
         speed: 7.90,
+        direction: 140,
         gusts: [8, 9, 7, 10, 8, 9, 11],
         history: [6, 7, 8, 7, 9, 8, 7, 8, 9, 7, 8]
       },
@@ -260,15 +278,24 @@ export async function GET() {
     const errorFallback = {
       current: {
         temp: 22,
+        feels_like: 24,
+        temp_min: 20,
+        temp_max: 25,
+        pressure: 1012,
         condition: 'Dông bão',
+        weatherMain: 'Thunderstorm',
         description: 'Mưa lớn, gió mạnh và sét thỉnh thoảng. Mưa đột ngột có thể dẫn đến ngập lụt cục bộ ở một số khu vực.',
         windSpeed: 7.90,
+        windDirection: 140,
+        clouds: 85,
+        visibility: 8000,
         location: 'Trạm VICENZA',
         uvIndex: 5,
         humidity: 75
       },
       wind: {
         speed: 7.90,
+        direction: 140,
         gusts: [8, 9, 7, 10, 8, 9, 11],
         history: [6, 7, 8, 7, 9, 8, 7, 8, 9, 7, 8]
       },

@@ -5,12 +5,29 @@ export const runtime = 'nodejs'
 export async function GET() {
   ensureMqttConnected()
 
+  let cleanup: () => void
+
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder()
+      let isClosed = false
+
+      const safeEnqueue = (chunk: Uint8Array) => {
+        if (isClosed) return
+        try {
+          controller.enqueue(chunk)
+        } catch (error: any) {
+          isClosed = true
+          // Ignore "Controller is already closed" error as it happens on disconnect
+          if (error?.code === 'ERR_INVALID_STATE' || error?.message?.includes('closed')) {
+            return
+          }
+          console.error('Stream enqueue error:', error)
+        }
+      }
 
       const send = (data: unknown) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
       }
 
       const latest = mqttService.getLatestData()
@@ -21,13 +38,17 @@ export async function GET() {
       })
 
       const heartbeat = setInterval(() => {
-        controller.enqueue(encoder.encode(':ping\n\n'))
+        safeEnqueue(encoder.encode(':ping\n\n'))
       }, 15_000)
 
-      controller.oncancel = () => {
+      cleanup = () => {
+        isClosed = true
         clearInterval(heartbeat)
         unsubscribe()
       }
+    },
+    cancel() {
+      if (cleanup) cleanup()
     },
   })
 

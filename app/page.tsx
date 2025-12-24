@@ -8,20 +8,32 @@ import Forecast from '@/components/Forecast'
 import Header from '@/components/Header'
 import Navigation from '@/components/Navigation'
 import SensorData from '@/components/SensorData'
+import WeatherBackground from '@/components/WeatherBackground'
 import type { SensorData as SensorPayload } from '@/lib/mqttService'
+
+import SensorCharts from '@/components/SensorCharts'
 
 interface WeatherData {
   current: {
     temp: number
+    feels_like?: number
+    temp_min?: number
+    temp_max?: number
+    pressure?: number
     condition: string
+    weatherMain?: string // For background logic
     description: string
     windSpeed: number
+    windDirection?: number
+    clouds?: number
+    visibility?: number
     location: string
     uvIndex: number
     humidity?: number
   }
   wind: {
     speed: number
+    direction?: number
     gusts: number[]
     history: number[]
   }
@@ -40,15 +52,24 @@ interface WeatherData {
 const baseWeather: WeatherData = {
   current: {
     temp: 22,
+    feels_like: 24,
+    temp_min: 20,
+    temp_max: 25,
+    pressure: 1012,
     condition: 'Dông bão',
+    weatherMain: 'Thunderstorm',
     description:
       'Mưa lớn, gió mạnh và sét thỉnh thoảng. Mưa đột ngột có thể dẫn đến ngập lụt cục bộ ở một số khu vực.',
     windSpeed: 7.9,
+    windDirection: 140,
+    clouds: 85,
+    visibility: 8000,
     location: 'Trạm VICENZA',
     uvIndex: 5,
   },
   wind: {
     speed: 7.9,
+    direction: 140,
     gusts: [8, 9, 7, 10, 8, 9, 11],
     history: [6, 7, 8, 7, 9, 8, 7, 8, 9, 7, 8],
   },
@@ -134,29 +155,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative overflow-hidden">
-      {/* Background with storm effect */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-800 via-slate-700 to-slate-900"></div>
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-900 rounded-full blur-3xl opacity-50"></div>
-          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-slate-800 rounded-full blur-3xl opacity-50"></div>
-          <div className="absolute bottom-1/4 left-1/2 w-96 h-96 bg-slate-700 rounded-full blur-3xl opacity-40"></div>
-        </div>
-        {/* Rain effect */}
-        <div className="absolute inset-0 opacity-20">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-0.5 h-20 bg-white animate-rain"
-              style={{
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${0.5 + Math.random() * 0.5}s`
-              }}
-            ></div>
-          ))}
-        </div>
-      </div>
+      {/* Dynamic Background */}
+      <WeatherBackground condition={mergedWeatherData.current.weatherMain || 'Clear'} />
 
       {/* Content */}
       <div className="relative z-10 p-6 md:p-8 lg:p-12">
@@ -164,14 +164,11 @@ export default function Home() {
           {/* Header */}
           <Header />
 
-          {/* Navigation */}
-          <Navigation />
-
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mt-8">
             {/* Left Column - Sensor Data Display */}
             <div className="lg:col-span-2 min-h-[400px]">
-              <CurrentWeather data={sensorData} />
+              <CurrentWeather data={sensorData} weather={mergedWeatherData.current} />
             </div>
 
             {/* Right Column - Widgets */}
@@ -194,24 +191,15 @@ export default function Home() {
           <div className="mt-8">
             <SensorData data={sensorData} />
           </div>
+
+          {/* Real-time Charts */}
+          <div className="mt-8">
+            <SensorCharts data={sensorData} />
+          </div>
+
+
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes rain {
-          0% {
-            transform: translateY(-100vh);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh);
-            opacity: 0;
-          }
-        }
-        .animate-rain {
-          animation: rain linear infinite;
-        }
-      `}</style>
     </main>
   )
 }
