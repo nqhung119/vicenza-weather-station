@@ -1,4 +1,5 @@
 import mqtt, { MqttClient } from 'mqtt'
+import { saveSensorReading } from './db'
 
 export interface SensorData {
   temp_room: number
@@ -81,6 +82,10 @@ class MqttService {
         if (isNaN(data.timestamp)) data.timestamp = Math.floor(Date.now() / 1000)
         
         this.latestData = data
+        
+        // Save to database
+        this.saveToDb(data)
+        
         this.notify(data)
       } catch (error) {
         console.error('[MQTT] Message parse error:', error)
@@ -158,6 +163,21 @@ class MqttService {
       } catch (err) {
         console.error('MQTT subscriber error:', err)
       }
+    }
+  }
+
+  private async saveToDb(data: SensorData) {
+    try {
+      await saveSensorReading({
+        tempRoom: data.temp_room,
+        humRoom: data.hum_room,
+        tempOut: data.temp_out,
+        lux: data.lux,
+        ldrRaw: data.ldr_raw,
+        timestamp: new Date(data.timestamp * 1000),
+      })
+    } catch (err) {
+      console.error('[MQTT] Error saving to database:', err)
     }
   }
 }

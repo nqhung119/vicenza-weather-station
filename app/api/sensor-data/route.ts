@@ -1,10 +1,22 @@
-import { ensureMqttConnected, mqttService } from '@/lib/mqttService'
+import { ensureMqttConnected, mqttService, SensorData } from '@/lib/mqttService'
+import { getLatestSensorReading } from '@/lib/db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   ensureMqttConnected()
+
+  // Load initial data from database
+  const dbReading = await getLatestSensorReading()
+  const initialData: SensorData | null = dbReading ? {
+    temp_room: dbReading.tempRoom,
+    hum_room: dbReading.humRoom,
+    temp_out: dbReading.tempOut,
+    lux: dbReading.lux,
+    ldr_raw: dbReading.ldrRaw,
+    timestamp: Math.floor(dbReading.timestamp.getTime() / 1000),
+  } : null
 
   let cleanup: () => void
 
@@ -31,7 +43,8 @@ export async function GET() {
         safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
       }
 
-      const latest = mqttService.getLatestData()
+      // Send initial data from DB if available, or from MQTT service
+      const latest = mqttService.getLatestData() || initialData
       if (latest) send(latest)
 
       const unsubscribe = mqttService.subscribe((data) => {
@@ -62,5 +75,3 @@ export async function GET() {
     },
   })
 }
-
-

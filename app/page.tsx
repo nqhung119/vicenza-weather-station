@@ -48,53 +48,44 @@ interface WeatherData {
   }>
 }
 
-const baseWeather: WeatherData = {
+const emptyWeather: WeatherData = {
   current: {
-    temp: 22,
-    feels_like: 24,
-    temp_min: 20,
-    temp_max: 25,
-    pressure: 1012,
-    condition: 'Dông bão',
-    weatherMain: 'Thunderstorm',
-    description:
-      'Mưa lớn, gió mạnh và sét thỉnh thoảng. Mưa đột ngột có thể dẫn đến ngập lụt cục bộ ở một số khu vực.',
-    windSpeed: 7.9,
-    windDirection: 140,
-    clouds: 85,
-    visibility: 8000,
+    temp: 0,
+    feels_like: 0,
+    temp_min: 0,
+    temp_max: 0,
+    pressure: 0,
+    condition: '--',
+    weatherMain: 'Clear',
+    description: '--',
+    windSpeed: 0,
+    windDirection: 0,
+    clouds: 0,
+    visibility: 0,
     location: 'Trạm VICENZA',
-    uvIndex: 5,
+    uvIndex: 0,
   },
   wind: {
-    speed: 7.9,
-    direction: 140,
-    gusts: [8, 9, 7, 10, 8, 9, 11],
-    history: [6, 7, 8, 7, 9, 8, 7, 8, 9, 7, 8],
+    speed: 0,
+    direction: 0,
+    gusts: [],
+    history: [],
   },
   sun: {
-    sunrise: '06:30',
-    sunset: '19:45',
+    sunrise: '--:--',
+    sunset: '--:--',
     currentTime: new Date().toLocaleTimeString('vi-VN', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false
     }),
   },
-  forecast: [
-    { day: 'Thứ hai', temp: 26, icon: 'cloud' },
-    { day: 'Thứ ba', temp: 28, icon: 'cloud' },
-    { day: 'Thứ tư', temp: 24, icon: 'storm' },
-    { day: 'Thứ năm', temp: 26, icon: 'cloud' },
-    { day: 'Thứ sáu', temp: 23, icon: 'cloud' },
-    { day: 'Thứ bảy', temp: 26, icon: 'cloud' },
-    { day: 'Chủ nhật', temp: 27, icon: 'sun-cloud' },
-  ],
+  forecast: [],
 }
 
 export default function Home() {
   const [sensorData, setSensorData] = useState<SensorPayload | null>(null)
-  const [weatherData, setWeatherData] = useState<WeatherData>(baseWeather)
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
 
   // Fetch weather data from API
   useEffect(() => {
@@ -140,11 +131,12 @@ export default function Home() {
 
   // Merge sensor data with weather data
   const mergedWeatherData = useMemo<WeatherData>(() => {
-    if (!sensorData) return weatherData
+    const base = weatherData || emptyWeather
+    if (!sensorData) return base
     return {
-      ...weatherData,
+      ...base,
       current: {
-        ...weatherData.current,
+        ...base.current,
         temp: sensorData.temp_out,
         humidity: sensorData.hum_room,
         location: 'Trạm VICENZA',
