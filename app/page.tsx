@@ -40,11 +40,11 @@ interface WeatherData {
 const baseWeather: WeatherData = {
   current: {
     temp: 22,
-    condition: 'Thunderstorms',
+    condition: 'Dông bão',
     description:
-      'Heavy rain, strong winds, and occasional lightning expected. Sudden downpours may lead to localized flooding in some areas.',
+      'Mưa lớn, gió mạnh và sét thỉnh thoảng. Mưa đột ngột có thể dẫn đến ngập lụt cục bộ ở một số khu vực.',
     windSpeed: 7.9,
-    location: 'Vicenza Station',
+    location: 'Trạm VICENZA',
     uvIndex: 5,
   },
   wind: {
@@ -55,22 +55,48 @@ const baseWeather: WeatherData = {
   sun: {
     sunrise: '06:30',
     sunset: '19:45',
-    currentTime: '11:52',
+    currentTime: new Date().toLocaleTimeString('vi-VN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    }),
   },
   forecast: [
-    { day: 'Monday', temp: 26, icon: 'cloud' },
-    { day: 'Tuesday', temp: 28, icon: 'cloud' },
-    { day: 'Wednesday', temp: 24, icon: 'storm' },
-    { day: 'Thursday', temp: 26, icon: 'cloud' },
-    { day: 'Friday', temp: 23, icon: 'cloud' },
-    { day: 'Saturday', temp: 26, icon: 'cloud' },
-    { day: 'Sunday', temp: 27, icon: 'sun-cloud' },
+    { day: 'Thứ hai', temp: 26, icon: 'cloud' },
+    { day: 'Thứ ba', temp: 28, icon: 'cloud' },
+    { day: 'Thứ tư', temp: 24, icon: 'storm' },
+    { day: 'Thứ năm', temp: 26, icon: 'cloud' },
+    { day: 'Thứ sáu', temp: 23, icon: 'cloud' },
+    { day: 'Thứ bảy', temp: 26, icon: 'cloud' },
+    { day: 'Chủ nhật', temp: 27, icon: 'sun-cloud' },
   ],
 }
 
 export default function Home() {
   const [sensorData, setSensorData] = useState<SensorPayload | null>(null)
+  const [weatherData, setWeatherData] = useState<WeatherData>(baseWeather)
 
+  // Fetch weather data from API
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch('/api/weather')
+        if (response.ok) {
+          const data = await response.json()
+          setWeatherData(data)
+        }
+      } catch (error) {
+        console.error('Error fetching weather:', error)
+      }
+    }
+
+    fetchWeather()
+    // Refresh every 10 minutes
+    const interval = setInterval(fetchWeather, 600000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Fetch sensor data from MQTT
   useEffect(() => {
     const eventSource = new EventSource('/api/sensor-data')
 
@@ -92,18 +118,19 @@ export default function Home() {
     }
   }, [])
 
-  const weatherData = useMemo<WeatherData>(() => {
-    if (!sensorData) return baseWeather
+  // Merge sensor data with weather data
+  const mergedWeatherData = useMemo<WeatherData>(() => {
+    if (!sensorData) return weatherData
     return {
-      ...baseWeather,
+      ...weatherData,
       current: {
-        ...baseWeather.current,
+        ...weatherData.current,
         temp: sensorData.temp_out,
         humidity: sensorData.hum_room,
-        location: 'Vicenza Station',
+        location: 'Trạm VICENZA',
       },
     }
-  }, [sensorData])
+  }, [sensorData, weatherData])
 
   return (
     <main className="min-h-screen relative overflow-hidden">
@@ -141,22 +168,26 @@ export default function Home() {
           <Navigation />
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-            {/* Left Column - Current Weather */}
-            <div className="lg:col-span-2">
-              <CurrentWeather data={weatherData.current} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mt-8">
+            {/* Left Column - Sensor Data Display */}
+            <div className="lg:col-span-2 min-h-[400px]">
+              <CurrentWeather data={sensorData} />
             </div>
 
             {/* Right Column - Widgets */}
-            <div className="space-y-6">
-              <WindStatus data={weatherData.wind} />
-              <SunriseSunset data={weatherData.sun} />
+            <div className="space-y-5 md:space-y-6 flex flex-col">
+              <div className="flex-1 min-h-[190px]">
+                <WindStatus data={mergedWeatherData.wind} />
+              </div>
+              <div className="flex-1 min-h-[190px]">
+                <SunriseSunset data={mergedWeatherData.sun} />
+              </div>
             </div>
           </div>
 
           {/* Forecast */}
           <div className="mt-12">
-            <Forecast data={weatherData.forecast} />
+            <Forecast data={mergedWeatherData.forecast} />
           </div>
 
           {/* Sensor Data */}
