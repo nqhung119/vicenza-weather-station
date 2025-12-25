@@ -28,8 +28,14 @@ export async function GET(request: NextRequest) {
       temp_out: r.tempOut,
       lux: r.lux,
       ldr_raw: r.ldrRaw,
-      timestamp: Math.floor(r.timestamp.getTime() / 1000),
-      created_at: r.createdAt.toISOString(),
+      timestamp: r.timestamp instanceof Date 
+        ? Math.floor(r.timestamp.getTime() / 1000)
+        : typeof r.timestamp === 'number' 
+          ? Math.floor(r.timestamp / 1000)
+          : 0,
+      created_at: r.createdAt instanceof Date 
+        ? r.createdAt.toISOString()
+        : new Date(r.createdAt).toISOString(),
     }))
 
     console.log(`[API] Returning ${data.length} records`)

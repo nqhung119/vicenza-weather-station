@@ -120,7 +120,7 @@ export async function getSensorReadings(from: Date, to: Date, limit = 100) {
           $lte: to,
         },
       })
-      .sort({ timestamp: 1 })
+      .sort({ timestamp: -1 })
       .limit(limit)
       .toArray()
     

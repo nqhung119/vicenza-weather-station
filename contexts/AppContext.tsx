@@ -40,7 +40,7 @@ interface WeatherData {
 }
 
 interface HistoryDataItem {
-  id: number
+  id: string | number
   temp_room: number
   hum_room: number
   temp_out: number
