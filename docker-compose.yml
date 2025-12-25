@@ -34,7 +34,7 @@ services:
       - HIVEMQ_USERNAME=${HIVEMQ_USERNAME}
       - HIVEMQ_PASSWORD=${HIVEMQ_PASSWORD}
       - HIVEMQ_CLIENT_ID=${HIVEMQ_CLIENT_ID:-vicenza-bridge}
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://localhost:27017}
       - MONGODB_DB=${MONGODB_DB:-vicenza_weather}
     network_mode: host
     restart: unless-stopped
