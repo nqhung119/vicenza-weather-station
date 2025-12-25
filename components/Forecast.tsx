@@ -43,26 +43,51 @@ const getIcon = (iconType: string) => {
 }
 
 export default function Forecast({ data }: ForecastProps) {
-  // Tạo đường cong mượt hơn
-  const wavePoints = data.length > 1 
-    ? data.map((_, i) => {
-        const x = (i / (data.length - 1)) * 100
-        const y = 50 + Math.sin(i * 0.8) * 15
-        return `${x}% ${y}`
-      }).join(' L ')
-    : ''
+  // SVG viewBox dimensions - use fixed numbers for path coordinates
+  const svgWidth = 1000
+  const svgHeight = 100
+  const baseY = 50
 
-  // Create valid SVG path
-  const wavePath = data.length > 1
-    ? `M 0 50 L ${wavePoints} L 100% 50`
-    : 'M 0 50 L 100% 50' // Simple horizontal line if not enough data
+  // Create wave path with actual coordinates (not percentages)
+  const wavePath = (() => {
+    if (data.length === 0) {
+      return `M 0 ${baseY} L ${svgWidth} ${baseY}`
+    }
+    
+    if (data.length === 1) {
+      return `M 0 ${baseY} L ${svgWidth} ${baseY}`
+    }
+
+    // Create wave points with actual coordinates
+    const points = data.map((_, i) => {
+      const x = (i / (data.length - 1)) * svgWidth
+      const y = baseY + Math.sin(i * 0.8) * 15
+      return { x, y }
+    })
+
+    // Build path string
+    let path = `M ${points[0].x} ${points[0].y}`
+    for (let i = 1; i < points.length; i++) {
+      path += ` L ${points[i].x} ${points[i].y}`
+    }
+    
+    // Close the path to base line
+    path += ` L ${svgWidth} ${baseY} L 0 ${baseY} Z`
+    
+    return path
+  })()
 
   return (
     <div className="glass-strong rounded-2xl p-5 md:p-6 border border-white/15 shadow-lg shadow-slate-900/40">
       <div className="relative">
         {/* Wave line connecting the days với gradient */}
         {data.length > 0 && (
-          <svg className="absolute top-0 left-0 w-full h-20 pointer-events-none" style={{ top: '-12px' }}>
+          <svg 
+            className="absolute top-0 left-0 w-full h-20 pointer-events-none" 
+            style={{ top: '-12px' }}
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+            preserveAspectRatio="none"
+          >
             <defs>
               <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="rgba(59, 130, 246, 0.4)" />
