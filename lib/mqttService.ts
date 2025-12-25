@@ -12,11 +12,29 @@ export interface SensorData {
 
 type Subscriber = (data: SensorData) => void
 
-const MQTT_HOST = process.env.MQTT_HOST || '192.168.221.4'
-const MQTT_PORT = Number(process.env.MQTT_PORT || 1883)
-const MQTT_USERNAME = process.env.MQTT_USERNAME
-const MQTT_PASSWORD = process.env.MQTT_PASSWORD
-const MQTT_TOPIC = process.env.MQTT_TOPIC || 'vicenza/weather/data'
+// HiveMQ Configuration (for Vercel deployment)
+const HIVEMQ_HOST = process.env.HIVEMQ_HOST
+const HIVEMQ_PORT = Number(process.env.HIVEMQ_PORT || 8883)
+const HIVEMQ_USERNAME = process.env.HIVEMQ_USERNAME
+const HIVEMQ_PASSWORD = process.env.HIVEMQ_PASSWORD
+const HIVEMQ_TOPIC = process.env.HIVEMQ_TOPIC || 'vicenza/weather/data'
+const HIVEMQ_CLIENT_ID = process.env.HIVEMQ_CLIENT_ID || `vicenza-client-${Date.now()}`
+
+// Local MQTT Configuration (for local development)
+const LOCAL_MQTT_HOST = process.env.LOCAL_MQTT_HOST || process.env.MQTT_HOST || '192.168.221.4'
+const LOCAL_MQTT_PORT = Number(process.env.LOCAL_MQTT_PORT || process.env.MQTT_PORT || 1883)
+const LOCAL_MQTT_USERNAME = process.env.LOCAL_MQTT_USERNAME || process.env.MQTT_USERNAME
+const LOCAL_MQTT_PASSWORD = process.env.LOCAL_MQTT_PASSWORD || process.env.MQTT_PASSWORD
+const LOCAL_MQTT_TOPIC = process.env.LOCAL_MQTT_TOPIC || process.env.MQTT_TOPIC || 'vicenza/weather/data'
+
+// Determine which MQTT broker to use
+// If HIVEMQ_HOST is set, use HiveMQ (Vercel), otherwise use local MQTT
+const USE_HIVEMQ = !!HIVEMQ_HOST
+const MQTT_HOST = USE_HIVEMQ ? HIVEMQ_HOST! : LOCAL_MQTT_HOST
+const MQTT_PORT = USE_HIVEMQ ? HIVEMQ_PORT : LOCAL_MQTT_PORT
+const MQTT_USERNAME = USE_HIVEMQ ? HIVEMQ_USERNAME : LOCAL_MQTT_USERNAME
+const MQTT_PASSWORD = USE_HIVEMQ ? HIVEMQ_PASSWORD : LOCAL_MQTT_PASSWORD
+const MQTT_TOPIC = USE_HIVEMQ ? HIVEMQ_TOPIC : LOCAL_MQTT_TOPIC
 
 class MqttService {
   private client: MqttClient | null = null
@@ -32,26 +50,44 @@ class MqttService {
     if (this.client || this.connecting) return
     this.connecting = true
 
-    const url = `mqtt://${MQTT_HOST}:${MQTT_PORT}`
+    // Determine protocol based on port and broker type
+    let protocol = 'mqtt'
+    if (USE_HIVEMQ) {
+      // HiveMQ: use mqtts for port 8883, ws for port 8080
+      protocol = MQTT_PORT === 8883 ? 'mqtts' : MQTT_PORT === 8080 ? 'ws' : 'mqtt'
+    }
 
-    this.client = mqtt.connect(url, {
+    const url = `${protocol}://${MQTT_HOST}:${MQTT_PORT}`
+    const brokerType = USE_HIVEMQ ? 'HiveMQ' : 'Local MQTT'
+    console.log(`[MQTT] Connecting to ${brokerType}: ${url}`)
+
+    const options: any = {
       username: MQTT_USERNAME,
       password: MQTT_PASSWORD,
-      reconnectPeriod: 5000, // Tăng thời gian retry lên 5 giây
+      reconnectPeriod: 5000,
       connectTimeout: 10_000,
       keepalive: 30,
+      clientId: USE_HIVEMQ ? HIVEMQ_CLIENT_ID : `local-client-${Date.now()}`,
       will: {
         topic: 'vicenza/weather/status',
         payload: 'offline',
         qos: 1,
         retain: false,
       },
-    })
+    }
+
+    // Add TLS options for secure HiveMQ connection
+    if (USE_HIVEMQ && protocol === 'mqtts') {
+      options.rejectUnauthorized = false // Set to true in production with proper certificates
+    }
+
+    this.client = mqtt.connect(url, options)
 
     this.client.on('connect', () => {
       this.connecting = false
       this.reconnectAttempts = 0
-      console.log(`[MQTT] Connected to ${MQTT_HOST}:${MQTT_PORT}`)
+      const brokerType = USE_HIVEMQ ? 'HiveMQ' : 'Local MQTT'
+      console.log(`[MQTT] Connected to ${brokerType} at ${MQTT_HOST}:${MQTT_PORT}`)
       
       this.client?.subscribe(MQTT_TOPIC, (err) => {
         if (err) {

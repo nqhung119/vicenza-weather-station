@@ -13,5 +13,22 @@ services:
       - sqlite-data:/app/data
     restart: unless-stopped
 
+  mqtt-bridge:
+    build: ./mqtt-bridge
+    environment:
+      - LOCAL_MQTT_HOST=${LOCAL_MQTT_HOST:-192.168.221.4}
+      - LOCAL_MQTT_PORT=${LOCAL_MQTT_PORT:-1883}
+      - LOCAL_MQTT_TOPIC=${LOCAL_MQTT_TOPIC:-vicenza/weather/data}
+      - LOCAL_MQTT_USERNAME=${LOCAL_MQTT_USERNAME:-}
+      - LOCAL_MQTT_PASSWORD=${LOCAL_MQTT_PASSWORD:-}
+      - HIVEMQ_HOST=${HIVEMQ_HOST}
+      - HIVEMQ_PORT=${HIVEMQ_PORT:-8883}
+      - HIVEMQ_TOPIC=${HIVEMQ_TOPIC:-vicenza/weather/data}
+      - HIVEMQ_USERNAME=${HIVEMQ_USERNAME}
+      - HIVEMQ_PASSWORD=${HIVEMQ_PASSWORD}
+      - HIVEMQ_CLIENT_ID=${HIVEMQ_CLIENT_ID:-vicenza-bridge}
+    network_mode: host
+    restart: unless-stopped
+
 volumes:
   sqlite-data:

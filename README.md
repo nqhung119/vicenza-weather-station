@@ -4,13 +4,13 @@ A modern, beautiful weather forecast application built with Next.js, featuring a
 
 ## Features
 
-- 🌤️ Current weather display with detailed conditions
-- 💨 Wind status with interactive graphs
-- 🌅 Sunrise/Sunset widget with visual gauge
-- 📅 7-day weather forecast
-- 🎨 Modern glassmorphism UI design
-- 🌧️ Animated storm background effects
-- 📱 Responsive design for all devices
+- Current weather display with detailed conditions
+- Wind status with interactive graphs
+- Sunrise/Sunset widget with visual gauge
+- 7-day weather forecast
+- Modern glassmorphism UI design
+- Animated storm background effects
+- Responsive design for all devices
 
 ## Getting Started
 
@@ -34,22 +34,84 @@ npm run dev
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Environment Variables (MQTT)
+## Architecture & Data Flow
+
+### Local Development
+- **Local MQTT Broker** (192.168.221.4) → **Next.js Backend** → **Frontend**
+- Backend trực tiếp subscribe từ local MQTT broker
+
+### Production (Vercel)
+- **Local MQTT Broker** (192.168.221.4) → **Docker Bridge Service** → **HiveMQ** → **Vercel Backend** → **Frontend**
+- Docker bridge service chạy độc lập, đẩy dữ liệu lên HiveMQ mỗi 5 phút
+- Vercel backend subscribe từ HiveMQ để lấy dữ liệu cảm biến
+
+## Environment Variables
 
 Create `./.env.local` (or copy from `env.local.example`):
 
+### Local MQTT Configuration (for local development)
 ```
-MQTT_HOST=192.168.221.4
-MQTT_PORT=1883
-MQTT_TOPIC=vicenza/weather/data
-# MQTT_USERNAME=
-# MQTT_PASSWORD=
+LOCAL_MQTT_HOST=192.168.221.4
+LOCAL_MQTT_PORT=1883
+LOCAL_MQTT_TOPIC=vicenza/weather/data
+# LOCAL_MQTT_USERNAME=
+# LOCAL_MQTT_PASSWORD=
 ```
+
+### HiveMQ Configuration (for Vercel deployment)
+```
+HIVEMQ_HOST=your-hivemq-broker.hivemq.cloud
+HIVEMQ_PORT=8883
+HIVEMQ_TOPIC=vicenza/weather/data
+HIVEMQ_USERNAME=your-username
+HIVEMQ_PASSWORD=your-password
+HIVEMQ_CLIENT_ID=vicenza-client
+```
+
+## MQTT Bridge Service (Docker)
+
+Service độc lập chạy trong Docker để bridge dữ liệu từ local MQTT broker lên HiveMQ.
+
+### Chạy với Docker Compose
+
+```bash
+docker-compose up mqtt-bridge
+```
+
+Hoặc chạy tất cả services:
+
+```bash
+docker-compose up
+```
+
+### Cấu hình Environment Variables
+
+Tạo file `.env` hoặc set environment variables cho Docker:
+
+```bash
+LOCAL_MQTT_HOST=192.168.221.4
+LOCAL_MQTT_PORT=1883
+LOCAL_MQTT_TOPIC=vicenza/weather/data
+HIVEMQ_HOST=your-hivemq-broker.hivemq.cloud
+HIVEMQ_PORT=8883
+HIVEMQ_TOPIC=vicenza/weather/data
+HIVEMQ_USERNAME=your-username
+HIVEMQ_PASSWORD=your-password
+HIVEMQ_CLIENT_ID=vicenza-bridge
+```
+
+### Chức năng
+
+Service sẽ:
+- Subscribe dữ liệu từ local MQTT broker (192.168.221.4)
+- Publish dữ liệu lên HiveMQ mỗi 5 phút
+- Tự động reconnect khi mất kết nối
+- Chạy độc lập với network_mode: host để truy cập local MQTT broker
 
 ## MQTT Integration
 
-- Topic subscribed: `vicenza/weather/data`
-- Message format:
+- **Topic**: `vicenza/weather/data`
+- **Message format**:
 ```json
 {
   "temp_room": 26.0,
@@ -60,8 +122,11 @@ MQTT_TOPIC=vicenza/weather/data
   "timestamp": 1766479802
 }
 ```
-- Backend: MQTT client (singleton) connects and stores latest payload.
-- API: `/api/sensor-data` exposes Server-Sent Events (SSE) streaming real-time updates to the frontend.
+
+- **Backend**: 
+  - Local: MQTT client subscribe từ local broker
+  - Vercel: MQTT client subscribe từ HiveMQ (nếu `HIVEMQ_HOST` được set)
+- **API**: `/api/sensor-data` exposes Server-Sent Events (SSE) streaming real-time updates to the frontend.
 
 ## Project Structure
 
@@ -85,7 +150,12 @@ vicenza-weather-station/
 │   ├── WindStatus.tsx        # Wind status widget
 │   └── SensorData.tsx        # Sensor data widget (MQTT)
 ├── lib/
-│   └── mqttService.ts        # MQTT client singleton
+│   └── mqttService.ts        # MQTT client singleton (supports both local MQTT and HiveMQ)
+├── mqtt-bridge/
+│   ├── Dockerfile            # Dockerfile cho bridge service
+│   ├── index.js              # Bridge service code
+│   └── package.json          # Dependencies cho bridge service
+├── docker-compose.yml        # Docker Compose configuration
 └── package.json
 ```
 
