@@ -9,7 +9,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --only=production
 
 # Copy application code
-COPY index.js ./
+COPY index.js mongodb.js ./
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
