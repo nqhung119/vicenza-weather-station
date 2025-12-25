@@ -7,7 +7,7 @@
 
 const mqtt = require('mqtt')
 const mongoService = require('./mongodb')
-require('dotenv').config()
+// Note: Environment variables are provided by Docker Compose, no need for dotenv
 
 // Local MQTT Configuration
 const LOCAL_MQTT_HOST = process.env.LOCAL_MQTT_HOST || '192.168.221.4'
