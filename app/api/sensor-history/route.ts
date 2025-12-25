@@ -14,7 +14,11 @@ export async function GET(request: NextRequest) {
     const to = new Date()
     const from = new Date(to.getTime() - hours * 60 * 60 * 1000)
 
+    console.log(`[API] Fetching sensor history from ${from.toISOString()} to ${to.toISOString()}, limit: ${limit}`)
+    
     const readings = await getSensorReadings(from, to, limit)
+    
+    console.log(`[API] Found ${readings.length} readings from database`)
 
     // Transform to API format
     const data = readings.map((r) => ({
@@ -28,6 +32,8 @@ export async function GET(request: NextRequest) {
       created_at: r.createdAt.toISOString(),
     }))
 
+    console.log(`[API] Returning ${data.length} records`)
+
     return NextResponse.json({
       data,
       count: data.length,
@@ -37,7 +43,12 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[API] Error fetching sensor history:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch sensor history' },
+      { 
+        error: 'Failed to fetch sensor history',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        data: [],
+        count: 0
+      },
       { status: 500 }
     )
   }

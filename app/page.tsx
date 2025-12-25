@@ -151,10 +151,14 @@ export default function Home() {
         const response = await fetch('/api/sensor-history?hours=24&limit=200')
         if (response.ok) {
           const result = await response.json()
+          console.log('[History] Fetched data:', result.count, 'records')
           setHistoryData(result.data || [])
+        } else {
+          const errorData = await response.json().catch(() => ({}))
+          console.error('[History] API error:', response.status, errorData)
         }
       } catch (error) {
-        console.error('Error fetching history:', error)
+        console.error('[History] Fetch error:', error)
       } finally {
         setIsLoadingHistory(false)
       }
@@ -235,7 +239,29 @@ export default function Home() {
 
           {/* Statistics */}
           <div className="mt-8">
-            <SensorStatistics history={historyData} />
+            <SensorStatistics 
+              history={
+                historyData.length > 0
+                  ? historyData.map(item => ({
+                      temp_room: item.temp_room,
+                      hum_room: item.hum_room,
+                      temp_out: item.temp_out,
+                      lux: item.lux,
+                      ldr_raw: item.ldr_raw,
+                      timestamp: item.timestamp,
+                    }))
+                  : sensorData
+                    ? [{
+                        temp_room: sensorData.temp_room,
+                        hum_room: sensorData.hum_room,
+                        temp_out: sensorData.temp_out,
+                        lux: sensorData.lux,
+                        ldr_raw: sensorData.ldr_raw,
+                        timestamp: sensorData.timestamp,
+                      }]
+                    : []
+              } 
+            />
           </div>
 
           {/* Data Table */}

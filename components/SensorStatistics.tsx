@@ -15,8 +15,12 @@ interface SensorStatisticsProps {
 }
 
 export default function SensorStatistics({ history }: SensorStatisticsProps) {
+  // Debug: log history data
+  console.log('[SensorStatistics] History data:', history?.length || 0, 'items')
+  
   const stats = useMemo(() => {
     if (!history || history.length === 0) {
+      console.log('[SensorStatistics] No history data available')
       return {
         temp_room: { min: 0, max: 0, avg: 0 },
         hum_room: { min: 0, max: 0, avg: 0 },
