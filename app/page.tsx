@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import CurrentWeather from '@/components/CurrentWeather'
 import WindStatus from '@/components/WindStatus'
 import SunriseSunset from '@/components/SunriseSunset'
@@ -8,7 +8,7 @@ import Forecast from '@/components/Forecast'
 import Header from '@/components/Header'
 import SensorData from '@/components/SensorData'
 import WeatherBackground from '@/components/WeatherBackground'
-import type { SensorData as SensorPayload } from '@/lib/mqttService'
+import { useApp } from '@/contexts/AppContext'
 
 import SensorCharts from '@/components/SensorCharts'
 import AdvancedSensorDashboard from '@/components/AdvancedSensorDashboard'
@@ -87,87 +87,8 @@ const emptyWeather: WeatherData = {
 }
 
 export default function Home() {
-  const [sensorData, setSensorData] = useState<SensorPayload | null>(null)
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
-  const [historyData, setHistoryData] = useState<Array<{
-    id: number
-    temp_room: number
-    hum_room: number
-    temp_out: number
-    lux: number
-    ldr_raw: number
-    timestamp: number
-    created_at: string
-  }>>([])
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
-
-  // Fetch weather data from API
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const response = await fetch('/api/weather')
-        if (response.ok) {
-          const data = await response.json()
-          setWeatherData(data)
-        }
-      } catch (error) {
-        console.error('Error fetching weather:', error)
-      }
-    }
-
-    fetchWeather()
-    // Refresh every 10 minutes
-    const interval = setInterval(fetchWeather, 600000)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Fetch sensor data from MQTT
-  useEffect(() => {
-    const eventSource = new EventSource('/api/sensor-data')
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data: SensorPayload = JSON.parse(event.data)
-        setSensorData(data)
-      } catch (error) {
-        console.error('SSE parse error:', error)
-      }
-    }
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error)
-    }
-
-    return () => {
-      eventSource.close()
-    }
-  }, [])
-
-  // Fetch sensor history for statistics and table
-  useEffect(() => {
-    const fetchHistory = async () => {
-      setIsLoadingHistory(true)
-      try {
-        const response = await fetch('/api/sensor-history?hours=24&limit=200')
-        if (response.ok) {
-          const result = await response.json()
-          console.log('[History] Fetched data:', result.count, 'records')
-          setHistoryData(result.data || [])
-        } else {
-          const errorData = await response.json().catch(() => ({}))
-          console.error('[History] API error:', response.status, errorData)
-        }
-      } catch (error) {
-        console.error('[History] Fetch error:', error)
-      } finally {
-        setIsLoadingHistory(false)
-      }
-    }
-
-    fetchHistory()
-    const interval = setInterval(fetchHistory, 60000) // Refresh every minute
-    return () => clearInterval(interval)
-  }, [])
+  // Use shared context instead of local state
+  const { sensorData, weatherData, historyData, isLoadingHistory } = useApp()
 
   // Merge sensor data with weather data
   const mergedWeatherData = useMemo<WeatherData>(() => {
