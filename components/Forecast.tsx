@@ -48,7 +48,7 @@ export default function Forecast({ data }: ForecastProps) {
   const svgHeight = 100
   const baseY = 50
 
-  // Create wave path with actual coordinates (not percentages)
+  // Create temperature-based path (reflecting actual temperature values)
   const wavePath = (() => {
     if (data.length === 0) {
       return `M 0 ${baseY} L ${svgWidth} ${baseY}`
@@ -58,21 +58,35 @@ export default function Forecast({ data }: ForecastProps) {
       return `M 0 ${baseY} L ${svgWidth} ${baseY}`
     }
 
-    // Create wave points with actual coordinates
-    const points = data.map((_, i) => {
+    // Calculate temperature range for scaling
+    const temps = data.map(item => item.temp)
+    const minTemp = Math.min(...temps)
+    const maxTemp = Math.max(...temps)
+    const tempRange = maxTemp - minTemp || 1 // Avoid division by zero
+    
+    // Temperature display range (vertical space for temperature visualization)
+    const tempDisplayHeight = 30 // Height for temperature variation
+    const tempOffset = 10 // Offset from base line
+    
+    // Create points based on actual temperature values
+    const points = data.map((item, i) => {
       const x = (i / (data.length - 1)) * svgWidth
-      const y = baseY + Math.sin(i * 0.8) * 15
-      return { x, y }
+      // Scale temperature to y coordinate (higher temp = lower y, inverted for SVG)
+      // Normalize temp to 0-1 range, then scale to display height
+      const normalizedTemp = tempRange > 0 ? (item.temp - minTemp) / tempRange : 0.5
+      const y = baseY - tempOffset - (normalizedTemp * tempDisplayHeight)
+      return { x, y, temp: item.temp }
     })
 
-    // Build path string
+    // Build path string with smooth curves
     let path = `M ${points[0].x} ${points[0].y}`
     for (let i = 1; i < points.length; i++) {
-      path += ` L ${points[i].x} ${points[i].y}`
+      // Use quadratic bezier for smoother curves
+      const prevX = points[i - 1].x
+      const currX = points[i].x
+      const midX = (prevX + currX) / 2
+      path += ` Q ${midX} ${points[i - 1].y}, ${currX} ${points[i].y}`
     }
-    
-    // Close the path to base line
-    path += ` L ${svgWidth} ${baseY} L 0 ${baseY} Z`
     
     return path
   })()
@@ -101,7 +115,8 @@ export default function Forecast({ data }: ForecastProps) {
               stroke="url(#waveGradient)"
               strokeWidth="2.5"
               strokeLinecap="round"
-              opacity="0.6"
+              strokeLinejoin="round"
+              opacity="0.7"
             />
           </svg>
         )}
