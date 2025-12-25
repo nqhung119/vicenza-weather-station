@@ -97,6 +97,14 @@ export default function HomeClient({ initialHistoryData }: HomeClientProps) {
   // Use shared context instead of local state
   const { sensorData, weatherData, historyData, isLoadingHistory } = useApp()
 
+  // Debug: Log initialHistoryData
+  useEffect(() => {
+    console.log('[HomeClient] Received initialHistoryData:', initialHistoryData.length, 'items')
+    if (initialHistoryData.length > 0) {
+      console.log('[HomeClient] First item:', initialHistoryData[0])
+    }
+  }, [])
+
   // Save initialHistoryData to cache and use it immediately
   useEffect(() => {
     if (initialHistoryData && initialHistoryData.length > 0) {
@@ -134,10 +142,9 @@ export default function HomeClient({ initialHistoryData }: HomeClientProps) {
   // Use initialHistoryData if available and context historyData is empty or older
   // Prefer initialHistoryData (from server) over context historyData (from cache/fetch)
   const displayHistoryData = useMemo(() => {
-    if (initialHistoryData.length > 0) {
-      return initialHistoryData
-    }
-    return historyData
+    const result = initialHistoryData.length > 0 ? initialHistoryData : historyData
+    console.log('[HomeClient] displayHistoryData:', result.length, 'items (initial:', initialHistoryData.length, ', context:', historyData.length, ')')
+    return result
   }, [initialHistoryData, historyData])
 
   return (

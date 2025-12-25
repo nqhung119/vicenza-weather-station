@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 interface SensorReading {
   id: string | number
@@ -19,6 +19,14 @@ interface SensorDataTableProps {
 }
 
 export default function SensorDataTable({ data, isLoading }: SensorDataTableProps) {
+  // Debug: Log received data
+  useEffect(() => {
+    console.log('[SensorDataTable] Received data:', data?.length || 0, 'items')
+    if (data && data.length > 0) {
+      console.log('[SensorDataTable] First item:', data[0])
+    }
+  }, [data])
+
   const [sortField, setSortField] = useState<keyof SensorReading | null>('timestamp')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
