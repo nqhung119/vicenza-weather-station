@@ -44,33 +44,42 @@ const getIcon = (iconType: string) => {
 
 export default function Forecast({ data }: ForecastProps) {
   // Tạo đường cong mượt hơn
-  const wavePoints = data.map((_, i) => {
-    const x = (i / (data.length - 1)) * 100
-    const y = 50 + Math.sin(i * 0.8) * 15
-    return `${x}% ${y}`
-  }).join(' L ')
+  const wavePoints = data.length > 1 
+    ? data.map((_, i) => {
+        const x = (i / (data.length - 1)) * 100
+        const y = 50 + Math.sin(i * 0.8) * 15
+        return `${x}% ${y}`
+      }).join(' L ')
+    : ''
+
+  // Create valid SVG path
+  const wavePath = data.length > 1
+    ? `M 0 50 L ${wavePoints} L 100% 50`
+    : 'M 0 50 L 100% 50' // Simple horizontal line if not enough data
 
   return (
     <div className="glass-strong rounded-2xl p-5 md:p-6 border border-white/15 shadow-lg shadow-slate-900/40">
       <div className="relative">
         {/* Wave line connecting the days với gradient */}
-        <svg className="absolute top-0 left-0 w-full h-20 pointer-events-none" style={{ top: '-12px' }}>
-          <defs>
-            <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(59, 130, 246, 0.4)" />
-              <stop offset="50%" stopColor="rgba(147, 197, 253, 0.4)" />
-              <stop offset="100%" stopColor="rgba(59, 130, 246, 0.4)" />
-            </linearGradient>
-          </defs>
-          <path
-            d={`M 0 50 L ${wavePoints} L 100% 50`}
-            fill="none"
-            stroke="url(#waveGradient)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            opacity="0.6"
-          />
-        </svg>
+        {data.length > 0 && (
+          <svg className="absolute top-0 left-0 w-full h-20 pointer-events-none" style={{ top: '-12px' }}>
+            <defs>
+              <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgba(59, 130, 246, 0.4)" />
+                <stop offset="50%" stopColor="rgba(147, 197, 253, 0.4)" />
+                <stop offset="100%" stopColor="rgba(59, 130, 246, 0.4)" />
+              </linearGradient>
+            </defs>
+            <path
+              d={wavePath}
+              fill="none"
+              stroke="url(#waveGradient)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              opacity="0.6"
+            />
+          </svg>
+        )}
 
         {/* Forecast items */}
         <div className="flex justify-between items-start relative z-10 pt-3">

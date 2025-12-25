@@ -11,8 +11,12 @@ interface SunriseSunsetProps {
 export default function SunriseSunset({ data }: SunriseSunsetProps) {
   // Convert time strings to minutes for calculation
   const timeToMinutes = (time: string) => {
-    if (!time) return 0
-    const [hours, minutes] = time.split(':').map(Number)
+    if (!time || time.includes('--')) return 0
+    const parts = time.split(':')
+    if (parts.length < 2) return 0
+    const hours = Number(parts[0])
+    const minutes = Number(parts[1])
+    if (isNaN(hours) || isNaN(minutes)) return 0
     return hours * 60 + minutes
   }
 
@@ -22,29 +26,22 @@ export default function SunriseSunset({ data }: SunriseSunsetProps) {
   
   const totalDaylight = sunsetMinutes - sunriseMinutes
   const elapsed = currentMinutes - sunriseMinutes
-  const progress = Math.max(0, Math.min(1, elapsed / totalDaylight))
+  const progress = totalDaylight > 0 ? Math.max(0, Math.min(1, elapsed / totalDaylight)) : 0.5
   
   // Math Configuration
   const CX = 110
   const CY = 100 // Visual bottom of the arc
   const R = 80
   
-  // Angle: 0 is Left (Sunrise), 180 is Right (Sunset) - standard math would be PI to 0
-  // But let's map Progress 0 -> 1 to Angle -PI -> 0 (top semi circle)
-  // Arc starts at -180 (Left) to 0 (Right)
-  
-  const angleRad = Math.PI + (progress * Math.PI) // PI to 2PI? No.
-  // Standard CSS coords: 0 is Right, PI/2 Down, PI Left.
-  // We want Left (PI) to Right (0) going Clockwise (Top).
-  // Parametric: x = cx + r * cos(a), y = cy + r * sin(a)
-  // Start: Left => x=30, y=100. Angle = PI.
-  // End: Right => x=190, y=100. Angle = 0 (or 2PI).
-  
   // Current position
   const currentAngle = Math.PI - (progress * Math.PI) // Goes from PI to 0
   
   const currentX = CX + R * Math.cos(currentAngle)
   const currentY = CY - R * Math.sin(currentAngle) // Subtract because SVG Y is down
+  
+  // Ensure coordinates are valid numbers
+  const validX = isFinite(currentX) && !isNaN(currentX) ? currentX : CX
+  const validY = isFinite(currentY) && !isNaN(currentY) ? currentY : CY - R
   // Wait, standard sin(PI) is 0, sin(PI/2) is 1.
   // We want top arc.
   // Angle PI: cos=-1 (x=CX-R), sin=0 (y=CY).
@@ -89,14 +86,14 @@ export default function SunriseSunset({ data }: SunriseSunsetProps) {
            <line x1="10" y1={CY} x2="210" y2={CY} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
 
            {/* Animated Sun Marker */}
-           <g transform={`translate(${currentX}, ${currentY})`}>
+           <g transform={`translate(${validX}, ${validY})`}>
               <circle r="8" fill="#fde047" className="shadow-[0_0_20px_rgba(253,224,71,0.6)]" />
               <circle r="12" fill="none" stroke="#fde047" strokeWidth="1" opacity="0.5" className="animate-ping" />
            </g>
            
            {/* Sun Icon in center bottom */}
            <text x={CX} y={CY - 20} textAnchor="middle" fill="white" fontSize="12" opacity="0.5">
-             {elapsed > 0 && elapsed < totalDaylight ? 'Ban ngày' : 'Ban đêm'}
+             {totalDaylight > 0 && elapsed > 0 && elapsed < totalDaylight ? 'Ban ngày' : 'Ban đêm'}
            </text>
         </svg>
       </div>

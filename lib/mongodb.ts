@@ -124,9 +124,11 @@ export async function getSensorReadings(from: Date, to: Date, limit = 100) {
       .limit(limit)
       .toArray()
     
+    console.log(`[MongoDB] Found ${readings.length} readings in database`)
     return readings
   } catch (error) {
     console.error('[MongoDB] Error fetching readings:', error)
+    // Return empty array on error so API can still respond successfully
     return []
   }
 }

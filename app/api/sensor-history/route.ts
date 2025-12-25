@@ -48,14 +48,18 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('[API] Error fetching sensor history:', error)
+    // Return 200 with empty data array to allow frontend to handle gracefully
+    // Only return 500 for critical errors that need user attention
     return NextResponse.json(
       { 
         error: 'Failed to fetch sensor history',
         message: error instanceof Error ? error.message : 'Unknown error',
         data: [],
-        count: 0
+        count: 0,
+        from: new Date().toISOString(),
+        to: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 200 } // Return 200 so frontend can still process the empty array
     )
   }
 }

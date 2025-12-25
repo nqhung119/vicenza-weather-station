@@ -10,12 +10,28 @@ interface WindStatusProps {
 }
 
 export default function WindStatus({ data }: WindStatusProps) {
-  const maxHistory = Math.max(...data.history, 5) // Ensure min height
-  const maxGusts = Math.max(...data.gusts, 5)
+  // Handle empty arrays properly
+  const maxHistory = data.history.length > 0 ? Math.max(...data.history, 5) : 5
+  const maxGusts = data.gusts.length > 0 ? Math.max(...data.gusts, 5) : 5
 
   // Smooth curve for line chart
   const getPath = (points: number[], width: number, height: number, max: number) => {
-    if (points.length === 0) return ''
+    if (points.length === 0 || max <= 0) {
+      // Return a valid path for empty data - horizontal line at bottom
+      return `M 0 ${height} L ${width} ${height}`
+    }
+    
+    // Ensure max is valid
+    if (!isFinite(max) || isNaN(max)) {
+      return `M 0 ${height} L ${width} ${height}`
+    }
+    
+    if (points.length === 1) {
+      // Single point - draw horizontal line
+      const y = height - (points[0] / max) * height
+      return `M 0 ${y} L ${width} ${y}`
+    }
+    
     const stepX = width / (points.length - 1)
     
     // Start point
@@ -31,6 +47,11 @@ export default function WindStatus({ data }: WindStatusProps) {
       const y0 = height - (p0 / max) * height
       const y1 = height - (p1 / max) * height
       
+      // Ensure coordinates are valid
+      if (!isFinite(x0) || !isFinite(y0) || !isFinite(x1) || !isFinite(y1)) {
+        continue
+      }
+      
       const cpX1 = x0 + stepX / 2
       const cpY1 = y0
       const cpX2 = x0 + stepX / 2
@@ -42,7 +63,10 @@ export default function WindStatus({ data }: WindStatusProps) {
   }
 
   const linePath = getPath(data.history, 200, 50, maxHistory)
-  const areaPath = `${linePath} L 200 50 L 0 50 Z`
+  // Only create area path if linePath is valid and not empty
+  const areaPath = linePath && linePath.trim() !== '' 
+    ? `${linePath} L 200 50 L 0 50 Z`
+    : `M 0 50 L 200 50 L 200 50 L 0 50 Z`
 
   return (
     <div className="glass-strong rounded-3xl p-6 border border-white/10 shadow-xl h-full flex flex-col justify-between">
@@ -100,20 +124,31 @@ export default function WindStatus({ data }: WindStatusProps) {
 
         {/* Bar Chart (Gusts) */}
         <div className="flex items-end justify-between h-24 gap-1.5 pt-4 border-t border-white/5">
-           {data.gusts.map((g, i) => (
-             <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-               <div 
-                  className="w-full bg-blue-500/30 rounded-t-sm group-hover:bg-blue-400/50 transition-all relative"
-                  style={{ height: `${(g / maxGusts) * 100}%` }}
-               >
-                 {/* Tooltip */}
-                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-20">
-                    {g.toFixed(1)}
+           {data.gusts.length > 0 ? (
+             data.gusts.map((g, i) => {
+               const heightPercent = maxGusts > 0 && isFinite(maxGusts) && isFinite(g)
+                 ? Math.max(0, Math.min(100, (g / maxGusts) * 100))
+                 : 0
+               return (
+                 <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                   <div 
+                      className="w-full bg-blue-500/30 rounded-t-sm group-hover:bg-blue-400/50 transition-all relative"
+                      style={{ height: `${heightPercent}%` }}
+                   >
+                     {/* Tooltip */}
+                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-20">
+                        {isFinite(g) ? g.toFixed(1) : '0'}
+                     </div>
+                   </div>
+                   <span className="text-[10px] text-white/30">{i + 1}</span>
                  </div>
-               </div>
-               <span className="text-[10px] text-white/30">{i + 1}</span>
+               )
+             })
+           ) : (
+             <div className="w-full text-center text-white/30 text-sm py-4">
+               Chưa có dữ liệu gió giật
              </div>
-           ))}
+           )}
         </div>
       
       </div>

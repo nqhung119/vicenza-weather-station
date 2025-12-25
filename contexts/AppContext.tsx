@@ -193,14 +193,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIsLoadingHistory(true)
       try {
         const response = await fetch('/api/sensor-history?hours=24&limit=200')
-        if (response.ok) {
-          const result = await response.json()
-          setHistoryData(result.data || [])
+        const result = await response.json()
+        
+        // Process result whether response is ok or not (API returns 200 even on errors)
+        if (result.data && Array.isArray(result.data)) {
+          console.log('[History] Fetched data:', result.data.length, 'items')
+          if (result.error) {
+            console.warn('[History] API warning:', result.error, result.message)
+          }
+          setHistoryData(result.data)
           setLastHistoryUpdate(new Date())
-          setCachedData(CACHE_KEYS.HISTORY, result.data || [])
+          setCachedData(CACHE_KEYS.HISTORY, result.data)
+        } else {
+          console.warn('[History] Invalid response format:', result)
+          setHistoryData([])
         }
       } catch (error) {
         console.error('[History] Fetch error:', error)
+        setHistoryData([])
       } finally {
         setIsLoadingHistory(false)
       }
