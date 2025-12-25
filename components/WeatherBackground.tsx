@@ -68,8 +68,19 @@ function WeatherBackground({ condition }: WeatherBackgroundProps) {
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden">
-      {/* 1. Base Gradient Layer */}
-      <div className={`absolute inset-0 bg-gradient-to-br transition-all duration-1000 ${getGradient()}`} />
+      {/* 1. Base Gradient Layer - Smoother transition */}
+      <div 
+        className="absolute inset-0 transition-all duration-1000"
+        style={{
+          background: `linear-gradient(to bottom right, 
+            ${timeTheme.period === 'noon' ? 'rgb(34, 211, 238), rgb(14, 165, 233), rgb(59, 130, 246)' :
+            timeTheme.period === 'morning' ? 'rgb(253, 224, 71), rgb(147, 197, 253), rgb(56, 189, 248)' :
+            timeTheme.period === 'dawn' ? 'rgb(249, 115, 22), rgb(244, 114, 182), rgb(253, 224, 71)' :
+            timeTheme.period === 'afternoon' ? 'rgb(251, 146, 60), rgb(239, 68, 68), rgb(236, 72, 153)' :
+            timeTheme.period === 'evening' ? 'rgb(67, 56, 202), rgb(88, 28, 135), rgb(30, 41, 59)' :
+            'rgb(15, 23, 42), rgb(30, 27, 75), rgb(0, 0, 0)'})`,
+        }}
+      />
 
       {/* 2. Visual Effects Layer */}
       
@@ -127,30 +138,46 @@ function WeatherBackground({ condition }: WeatherBackgroundProps) {
         <>
           {/* Sun / Moon / Light Source - Based on time */}
           {(timeTheme.period === 'night' || timeTheme.period === 'evening') ? (
-            // Moon for night/evening
+            // Moon for night/evening - Circular with soft glow
             <div 
-              className={`absolute w-[500px] h-[500px] bg-gradient-radial from-white/20 via-white/10 to-transparent ${timeTheme.sunMoonPosition.blur} animate-pulse-slow`}
+              className="absolute rounded-full"
               style={{
+                width: '400px',
+                height: '400px',
                 top: timeTheme.sunMoonPosition.top,
                 right: timeTheme.sunMoonPosition.right,
+                transform: 'translate(50%, -50%)',
+                background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 30%, transparent 70%)',
+                filter: 'blur(60px)',
                 opacity: timeTheme.sunMoonPosition.opacity,
+                animation: 'pulse-slow 8s ease-in-out infinite',
               }}
-            ></div>
+            />
           ) : (
-            // Sun for day
+            // Sun for day - Circular with natural glow
             <div 
-              className={`absolute w-[600px] h-[600px] bg-gradient-radial ${
-                timeTheme.period === 'dawn' ? 'from-orange-300/50 via-pink-200/30' :
-                timeTheme.period === 'morning' ? 'from-yellow-200/60 via-yellow-100/30' :
-                timeTheme.period === 'noon' ? 'from-yellow-200/70 via-yellow-100/40' :
-                'from-orange-300/60 via-red-200/30'
-              } to-transparent ${timeTheme.sunMoonPosition.blur} animate-pulse-slow`}
+              className="absolute rounded-full"
               style={{
+                width: timeTheme.period === 'noon' ? '500px' : '450px',
+                height: timeTheme.period === 'noon' ? '500px' : '450px',
                 top: timeTheme.sunMoonPosition.top,
                 right: timeTheme.sunMoonPosition.right,
+                transform: 'translate(50%, -50%)',
+                background: timeTheme.period === 'dawn' 
+                  ? 'radial-gradient(circle at center, rgba(251, 146, 60, 0.4) 0%, rgba(244, 114, 182, 0.25) 25%, rgba(253, 224, 71, 0.15) 50%, transparent 70%)'
+                  : timeTheme.period === 'morning'
+                  ? 'radial-gradient(circle at center, rgba(254, 240, 138, 0.5) 0%, rgba(254, 249, 195, 0.3) 30%, rgba(254, 240, 138, 0.15) 50%, transparent 70%)'
+                  : timeTheme.period === 'noon'
+                  ? 'radial-gradient(circle at center, rgba(254, 240, 138, 0.6) 0%, rgba(254, 249, 195, 0.35) 25%, rgba(254, 240, 138, 0.2) 45%, transparent 70%)'
+                  : 'radial-gradient(circle at center, rgba(251, 146, 60, 0.5) 0%, rgba(239, 68, 68, 0.3) 30%, rgba(251, 146, 60, 0.15) 50%, transparent 70%)',
+                filter: 'blur(50px)',
                 opacity: timeTheme.sunMoonPosition.opacity,
+                animation: 'pulse-slow 8s ease-in-out infinite',
+                boxShadow: timeTheme.period === 'noon' 
+                  ? '0 0 200px rgba(254, 240, 138, 0.3), 0 0 300px rgba(254, 240, 138, 0.2)'
+                  : '0 0 150px rgba(251, 146, 60, 0.2), 0 0 250px rgba(251, 146, 60, 0.15)',
               }}
-            ></div>
+            />
           )}
           
           {/* Beautiful Fluffy Clouds (CSS Shapes) - Only show during day */}
